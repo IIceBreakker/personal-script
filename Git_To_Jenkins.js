@@ -5,9 +5,11 @@
 // @description  try to take over the world!
 // @author       You
 // @match        http://112.111.20.89:30024/*
-// @match        http://192.168.8.48/*
+// @match        http://192.168.8.48/*/*/-/tags/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=tencent.com
 // @grant    GM_openInTab
+// @updateURL    https://github.com/IIceBreakker/personal-script/blob/main/Git_To_Jenkins.js
+// @downloadURL    https://github.com/IIceBreakker/personal-script/blob/main/Git_To_Jenkins.js
 // ==/UserScript==
 
 (function () {
@@ -16,6 +18,10 @@
   let serverMap = {
     "gpmscloud-agtender-service": "GPFA-AGTENDER",
     "gpmscloud-procurement-service": "GPMS-PROCUREMENT",
+    "gpx-basic-platform": "GPX-BASIC-PLATFORM",
+    "gpmscloud-bidconfirm-server":"GPX-BIDCONFIRM",
+    "gpx-basic-platform":"GPX-BASIC-PLATFORM",
+    "gpx-tender-server":"GPX-TENDER"
   }
 
   let serviceNameInputEle = document.getElementsByClassName("jenkins-select__input")[0];
@@ -37,7 +43,7 @@
     dialog.innerHTML = `
       <div class="dialog-content">
           <div class="dialog-header">
-              <h3>Confirm Your Build</h3>
+              <h3>Superb（SB）Jenkins，Confirm Your Build</h3>
           </div>
           <table>
             <tr>
@@ -90,13 +96,41 @@
     let month = (date.getMonth() + 1).toString();
     let day = date.getDate().toString();
     let dateStr = year + (month < 10 ? "0" + month : month) + (day < 10 ? "0" + day : day);
-    document.getElementById('serverName').innerText = serviceNameInputEle.value;
-    document.getElementById('tagName').innerText = tagNameInputEle.value;
-    document.getElementById('mreName').innerText = mreInputEle.value;
-    document.getElementById('jdkName').innerText = jdkInputEle.value;
-    document.getElementById('relVer').innerText = relVerInputEle.value;
-    document.getElementById('installDeploy').innerText = installDeployInputEle.value;
-    document.getElementById('imageName').innerText = tagNameInputEle.value + "_" + dateStr + "_" + serverMap[serviceNameInputEle.value];
+    
+    let serverNameDisNode = document.getElementById('serverName');
+    let tagNameDisNode = document.getElementById('tagName');
+    let mreNameDisNode = document.getElementById('mreName');
+    let jdkNameDisNode = document.getElementById('jdkName');
+    let relVerDisNode = document.getElementById('relVer');
+    let installDeployDisNode = document.getElementById('installDeploy');
+    let imageNameDisNode = document.getElementById('imageName');
+
+    serverNameDisNode.innerText = serviceNameInputEle.value;
+    tagNameDisNode.innerText = tagNameInputEle.value;
+    mreNameDisNode.innerText = mreInputEle.value;
+    jdkNameDisNode.innerText = jdkInputEle.value;
+    relVerDisNode.innerText = relVerInputEle.value;
+    installDeployDisNode.innerText = installDeployInputEle.value;
+    imageNameDisNode.innerText = tagNameInputEle.value + "_" + dateStr + "_" + serverMap[serviceNameInputEle.value];
+
+    if (mreInputEle.value == '版本提测') {
+      mreNameDisNode.style.color = 'green';
+    }
+    if (mreInputEle.value == '紧急发版') {
+      mreNameDisNode.style.color = 'gray';
+    }
+    if (mreInputEle.value == '构建部署镜像') {
+      mreNameDisNode.style.color = 'red';
+    }
+
+    if (tagNameDisNode.innerText.startsWith("V")) {
+      tagNameDisNode.style.color = 'green';
+      imageNameDisNode.style.color = 'green';
+    }
+
+    if (installDeployDisNode.innerText.startsWith("否")) {
+      installDeployDisNode.style.color = 'green';
+    }
 
     document.querySelector('.cancel-btn').addEventListener('click', closeDialog);
     document.querySelector('.confirm-btn').addEventListener('click', confirmAction);
@@ -175,7 +209,7 @@
       border: '1px solid #ccc',
       boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
       zIndex: '1000',
-      width: '510px',
+      width: '600px',
       padding: '20px',
       boxSizing: 'border-box'
     });
@@ -194,7 +228,6 @@
 
   const regexJenkins = /http:\/\/112\.111\.20\.89:30024\/view\/([^\/]+)\/job\/gpx\/build\?delay=0sec/;
   if (regexJenkins.test(window.location.href)) {
-
     let buildBtn = document.querySelector('.jenkins-button');
     buildBtn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -207,11 +240,18 @@
     })
 
     let jenKinsParam = new URLSearchParams(window.location.search)
-    serviceNameInputEle.value = jenKinsParam.get('serviceName');
-    tagNameInputEle.value = jenKinsParam.get('tagName');
-    mreInputEle.value = '版本提测'
+    if (null != jenKinsParam.get('serviceName')) {
+       serviceNameInputEle.value = jenKinsParam.get('serviceName');
+    }
+    if (null != jenKinsParam.get('tagName')) {
+       tagNameInputEle.value = jenKinsParam.get('tagName');
+       relVerInputEle.value = jenKinsParam.get('tagName').split("_")[0];
+       mreInputEle.value = '版本提测'
+    } else {
+       tagNameInputEle.value = "origin/";
+       mreInputEle.value = "构建部署镜像"
+    }
     jdkInputEle.value = "jdk-8";
-    relVerInputEle.value = jenKinsParam.get('tagName').split("_")[0];
     installDeployInputEle.value = "否";
     console.log(buildBtn)
   }
